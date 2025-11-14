@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Checkout — Kaduna E-Store</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  :root{--pink:#ff69b4;--pink-soft:#ffe6f0;--black:#000;--white:#fff;--muted:#666;--r:12px}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,"Segoe UI",Arial;background:#fff;color:#000}
+  header{background:var(--pink);padding:12px 20px;display:flex;align-items:center; justify-content:space-between;color:#fff;}
+  .logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:#fff;font-weight:800}
+  .logo img{height:40px;border-radius:8px;object-fit:cover}
+  main{max-width:1100px;margin:24px auto;padding:0 16px}
+  .wrap{display:grid;grid-template-columns:2fr 1fr;gap:18px}
+  @media (max-width:900px){.wrap{grid-template-columns:1fr}}
+  .card{background:#fff;border:1px solid #eee;border-radius:var(--r);box-shadow:0 8px 22px rgba(0,0,0,.05)}
+  .card h3{margin:0;padding:14px 16px;border-bottom:1px solid #f2f2f2}
+  .card-body{padding:14px 16px}
+  .bank{background:var(--pink-soft);border:1px dashed #ffb3d5;padding:12px;border-radius:10px}
+  .bank-row{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+  .btn{background:#000;color:#fff;border:0;border-radius:10px;padding:10px 14px;cursor:pointer;font-weight:800}
+  .btn:hover{background:#333}
+  .btn-light{background:#fff;color:#000;border:1px solid #ddd}
+  .btn-copy{background:#ffc1dc;border:1px solid #ffb3d5; cursor: pointer; border-radius: 5px; color:#000}
+  .muted{color:var(--muted);font-size:.95rem}
+  .grid-items{display:grid;gap:12px}
+  .item{display:grid;grid-template-columns:84px 1fr auto;gap:12px;align-items:center;background:var(--pink-soft);border-radius:12px;padding:10px}
+  .item img{width:84px;height:84px;object-fit:cover;border-radius:8px}
+  .item h4{margin:0 0 6px 0;font-size:1rem}
+  .meta{font-size:.9rem;color:#555}
+  .qty{display:flex;align-items:center;gap:8px;margin-top:8px}
+  .qty button{padding:6px 10px;border-radius:8px;border:0;background:#000;color:#fff;cursor:pointer}
+  .qty button:hover{background:#333}
+  .remove{display:inline-flex;align-items:center;gap:6px;border:1px solid #ffb3d5;background:#fff;color:#d20000;padding:6px 10px;border-radius:8px;cursor:pointer}
+  .price{text-align:right}
+  .price p{margin:2px 0}
+  .total{display:flex;justify-content:space-between;margin-top:12px;font-weight:800}
+  .summary-line{display:flex;justify-content:space-between;margin:6px 0}
+  .summary-line.muted{font-weight:600;color:#555}
+  .summary-line.grand{font-size:1.1rem;font-weight:900}
+  .note{font-size:.92rem;color:#333;background:#fff9fb;border:1px solid #ffe0ef;padding:10px;border-radius:10px}
+  .form-row{display:flex;gap:10px;flex-wrap:wrap}
+  .input{width:100%;padding:10px;border:1px solid #ddd;border-radius:10px}
+  .toast{position:fixed;right:16px;top:76px;background:#0b0b0b;color:#fff;padding:10px 14px;border-radius:10px;display:none;z-index:40}
+  footer{margin-top:28px;background:var(--pink);color:#fff;text-align:center;padding:20px}
+</style>
+</head>
+<body>
+
+<header>
+  <a href="index.html" class="logo"><img src="image/logo.jpg" alt="logo"> Kaduna E-Store</a>
+  <nav>
+    <a href="cart.html" style="color:#fff;text-decoration:none;font-weight:700;margin-right:14px"><i class="fa fa-shopping-cart"></i> Cart</a>
+  </nav>
+</header>
+
+<main>
+  <div class="wrap">
+    <!-- LEFT: Order -->
+    <section class="card">
+      <h3>Order Summary</h3>
+      <div class="card-body">
+        <div id="items" class="grid-items"></div>
+
+        <div id="empty" style="display:none;text-align:center;margin:24px 0">
+          <p class="muted">Your cart is empty.</p>
+          <a href="index.html"><button class="btn">Back to Shop</button></a>
+        </div>
+
+        <div id="totals" style="margin-top:10px">
+          <div class="summary-line muted"><span>Items</span><span id="itemsCount">0</span></div>
+          <div class="summary-line muted"><span>Subtotal</span><span>₦<span id="subTotal">0</span></span></div>
+          <div class="summary-line grand"><span>Total</span><span>₦<span id="grandTotal">0</span></span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: Payment + Customer -->
+    <aside class="card">
+      <h3>Pay & Confirm</h3>
+      <div class="card-body">
+        <div class="bank">
+          <div class="bank-row">
+            <div><strong>Bank:</strong> xxxxxxxxxx</div>
+            <button class="btn-copy" onclick="copyBank()">Copy</button>
+          </div>
+          <div class="bank-row" style="margin-top:6px">
+            <div><strong>Account No:</strong> <span id="acctNo">xxxxxxxxxx</span></div>
+            <div><strong>Name:</strong> xxxxxx xxxxx xxx</div>
+          </div>
+        </div>
+
+        <p class="muted" style="margin:10px 0 6px"> <i> fill in your details and click the “Confirm via WhatsApp” button below before completing your payment. This helps us verify your order and ensure a smooth transaction.</i> </p>
+
+        <div class="form-row">
+          <input class="input" id="custName" placeholder="Full name" autocomplete="name" required>
+          <input class="input" id="custPhone" placeholder="Phone number" autocomplete="tel" required>
+          <textarea class="input" id="custAddress" rows="3" placeholder="Delivery address"></textarea>
+          <textarea class="input" id="custNote" rows="2" placeholder="Notes (e.g., landmark, delivery time)"></textarea>
+        </div>
+
+        <div class="note" style="margin:12px 0">
+          <i class="fa fa-info-circle"></i> Payment is manual transfer. You’ll be redirected to WhatsApp to Make your payment, send your proof of payment and order details.
+        </div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <a href="cart.html"><button class="btn btn-light" type="button">Edit Cart</button></a>
+          <button class="btn" type="button" onclick="confirmOnWhatsApp()"><i class="fa fa-whatsapp"></i> Confirm via WhatsApp</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<footer>
+  <div><strong>Phone:</strong> 0813 567 6153 &nbsp;|&nbsp; <strong>Address:</strong> Unguwan Dosa, Kaduna State. </div>
+  <div style="margin-top:10px">&copy; 2025 Kaduna E-Store. All rights reserved.</div>
+</footer>
+
+<div id="toast" class="toast">Copied</div>
+
+<script>
+const WA_PHONE = "2348135676153"; // WhatsApp number
+let cart = JSON.parse(localStorage.getItem("pc_cart_v1")||"[]");
+
+const itemsEl = document.getElementById("items");
+const emptyEl = document.getElementById("empty");
+const itemsCountEl = document.getElementById("itemsCount");
+const subTotalEl = document.getElementById("subTotal");
+const grandTotalEl = document.getElementById("grandTotal");
+const toast = document.getElementById("toast");
+
+function fmt(n){return (n||0).toString().replace(/\B(?=(\d{3})+(?!\d))/g,',');}
+function save(){localStorage.setItem("pc_cart_v1", JSON.stringify(cart));}
+
+function showToast(msg){
+  toast.textContent = msg;
+  toast.style.display = 'block';
+  toast.style.opacity = '1';
+  setTimeout(()=>{toast.style.opacity='0'; setTimeout(()=>toast.style.display='none',180)},1200);
+}
+
+function copyBank(){
+  const txt = `\nBank Name: MONIEPOINT\nAccount Number: Ask for Account Number \nName: KADUNA RESIN & CRAFT E-STORE`;
+  navigator.clipboard.writeText(txt).then(()=>showToast("Bank details copied"));
+}
+
+function render(){
+  itemsEl.innerHTML = "";
+  if(cart.length===0){
+    emptyEl.style.display = "block";
+    document.getElementById("totals").style.display = "none";
+    return;
+  }
+  emptyEl.style.display = "none";
+  document.getElementById("totals").style.display = "block";
+
+  let count = 0, subtotal = 0;
+
+  cart.forEach((it, i)=>{
+    const qty = it.qty||1;
+    const unit = it.price||0;
+    const sub = qty * unit;
+    count += qty;
+    subtotal += sub;
+
+    const row = document.createElement('div');
+    row.className = 'item';
+    row.innerHTML = `
+      <img src="${it.image}" alt="${it.name}" onerror="this.src='https://via.placeholder.com/100x100?text=${encodeURIComponent(it.name)}'">
+      <div>
+        <h4>${it.name}</h4>
+        <div class="meta">
+          ${it.size?`Size: <strong>${it.size}</strong>&nbsp;`:""}
+          ${it.color?`Color: <strong>${it.color}</strong>`:""}
+        </div>
+        <div class="qty">
+          <button onclick="chg(${i},-1)">−</button>
+          <span><strong>${qty}</strong></span>
+          <button onclick="chg(${i},1)">+</button>
+          <button class="remove" onclick="removeItem(${i})"><i class="fa fa-trash"></i> Remove</button>
+        </div>
+      </div>
+      <div class="price">
+        <p>Unit: ₦${fmt(unit)}</p>
+        <p><strong>₦${fmt(sub)}</strong></p>
+      </div>
+    `;
+    itemsEl.appendChild(row);
+  });
+
+  itemsCountEl.textContent = count;
+  subTotalEl.textContent = fmt(subtotal);
+  grandTotalEl.textContent = fmt(subtotal); // no extra fees here
+}
+
+function chg(i, d){
+  const q = Math.max(1, (cart[i].qty||1) + d);
+  cart[i].qty = q;
+  save(); render();
+}
+
+function removeItem(i){
+  cart.splice(i,1);
+  save(); render();
+}
+
+function confirmOnWhatsApp(){
+  if(cart.length===0){
+    showToast("Cart is empty");
+    return;
+  }
+  const name = (document.getElementById("custName").value||"").trim();
+  const phone = (document.getElementById("custPhone").value||"").trim();
+  const addr = (document.getElementById("custAddress").value||"").trim();
+  const note = (document.getElementById("custNote").value||"").trim();
+
+  let total = 0;
+  let lines = cart.map((it, idx)=>{
+    const qty = it.qty||1;
+    const unit = it.price||0;
+    const sub = qty*unit;
+    total += sub;
+    const parts = [
+      `${idx+1}. ${it.name}`,
+      it.size?`Size: ${it.size}`:null,
+      it.color?`Color: ${it.color}`:null,
+      `Qty: ${qty}`,
+      `Unit: ₦${fmt(unit)}`,
+      `Sub: ₦${fmt(sub)}`
+    ].filter(Boolean);
+    return parts.join(" | ");
+  }).join("%0A");
+
+  const header = `Kaduna E-Store Payment Confirmation`;
+  const bank = `MONIEPOINT | xxxxxxxxxx | KADUNA RESIN & CRAFT E-STORE`;
+  const cust = `Name: ${name||"[Your Name]"} | Phone: ${phone||"[Your Phone]"}%0AAddress: ${addr||"[Your Address]"}${note?`%0ANote: ${encodeURIComponent(note)}`:""}`;
+
+  const msg =
+`${encodeURIComponent(header)}%0A%0AOrder:%0A${lines}%0A%0ATotal: ₦${fmt(total)}%0A%0ABank:%0A${encodeURIComponent(bank)}%0A%0A${cust}%0A%0A Could you please send me the payment details so that I can make the payment.`;
+
+  // WhatsApp deep link
+  const url = `https://wa.me/${WA_PHONE}?text=${msg}`;
+  window.location.href = url;
+}
+
+render();
+</script>
+</body>
+</html>

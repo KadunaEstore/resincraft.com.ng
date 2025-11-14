@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Kaduna E-Store — 122 Products</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<style>
+  :root{
+    --pink:#ff69b4; --pink-soft:#ffe6f0; --white:#fff; --black:#0b0b0b; --muted:#666; --r:12px;
+  }
+  *{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,"Segoe UI",Arial;background:var(--white);color:var(--black);min-height:100vh;display:flex;flex-direction:column}
+  header{background:var(--pink);padding:12px 20px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:50;box-shadow:0 6px 20px rgba(0,0,0,.08)}
+  .logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:#fff;cursor:pointer}
+  .logo img{width:44px;height:44px;border-radius:8px;object-fit:cover}
+  .logo span{font-weight:800}
+  .search-wrap{flex:1;display:flex;justify-content:center}
+  .search{width:100%;max-width:760px;background:rgba(255,255,255,.96);padding:6px 10px;border-radius:999px;display:flex;align-items:center;gap:8px}
+  .search input{flex:1;border:0;outline:0;padding:8px 6px;background:transparent;font-size:15px}
+  .cart-btn{position:relative;background:transparent;border:0;cursor:pointer;font-size:20px;color:#fff}
+  .cart-count{position:absolute;top:-8px;right:-12px;background:#000;color:#fff;padding:3px 7px;border-radius:999px;font-size:12px;font-weight:800}
+
+  main{flex:1;max-width:1200px;margin:28px auto;padding:0 16px;width:100%}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
+  .card{background:var(--pink-soft);border-radius:var(--r);overflow:hidden;box-shadow:0 8px 22px rgba(0,0,0,.06);transition:transform .22s,box-shadow .22s}
+  .card:hover{transform:translateY(-6px);box-shadow:0 18px 44px rgba(0,0,0,.12)}
+  .card img{width:100%;height:180px;object-fit:cover;display:block}
+  .card-body{padding:12px;text-align:center}
+  .title{font-weight:700;margin:6px 0;font-size:1rem}
+  .price{font-weight:800;margin:6px 0}
+  .btn{margin-top:8px;padding:8px 12px;border-radius:8px;border:0;background:#000;color:#fff;cursor:pointer;font-weight:700}
+  .btn:hover{background:var(--pink);color:#000}
+
+  .pagination{display:flex;justify-content:center;gap:8px;margin:22px 0}
+  .page-btn{padding:8px 12px;border-radius:8px;border:0;background:#f2f2f2;cursor:pointer;min-width:40px}
+  .page-btn.active{background:var(--pink);color:#fff;box-shadow:0 6px 18px rgba(0,0,0,.08)}
+
+  .backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:20px;z-index:80}
+  .modal{width:100%;max-width:900px;background:#fff;border-radius:14px;display:flex;gap:12px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.25);position:relative}
+  .m-left{flex:1;min-width:300px;background:#f7f7f7}
+  .m-left img{width:100%;height:100%;object-fit:cover}
+  .m-right{width:420px;padding:18px;display:flex;flex-direction:column;gap:10px}
+  .x{position:absolute;right:16px;top:12px;background:transparent;border:0;font-size:20px;cursor:pointer}
+  .m-title{font-weight:800;font-size:1.05rem}
+  .m-price{font-weight:800}
+  .opt{padding:8px;border-radius:8px;border:1px solid #e6e6e6;background:#fff}
+  .row{display:flex;align-items:center;gap:8px}
+  .qty{padding:8px 12px;border-radius:8px;border:0;background:#f2f2f2;cursor:pointer}
+  .cta{padding:10px 14px;border-radius:10px;border:0;background:#000;color:#fff;cursor:pointer;font-weight:800}
+  .cta.alt{background:#f2f2f2;color:#000}
+  .toast{position:fixed;right:20px;top:80px;background:#0b0b0b;color:#fff;padding:12px 16px;border-radius:10px;display:none;z-index:90}
+  footer{background:var(--pink);color:#fff;padding:20px;text-align:center;margin-top:28px}
+</style>
+</head>
+<body>
+<header>
+  <a class="logo" href="index.html" title="Home"><img src="image/logo.jpg" alt="logo"><span>Kaduna E-Store</span></a>
+  <div class="search-wrap">
+    <div class="search">
+      <input id="searchInput" placeholder="Search products by name…" />
+      <i class="fa fa-search" style="color:#666"></i>
+    </div>
+  </div>
+  <button class="cart-btn" onclick="location.href='cart.html'">
+    <i class="fa fa-shopping-cart"></i><span class="cart-count" id="cartCount">0</span>
+  </button>
+</header>
+
+<main>
+  <section id="grid" class="grid" aria-live="polite"></section>
+  <div class="pagination" id="pagination"></div>
+</main>
+
+<!-- Product modal -->
+<div class="backdrop" id="backdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <button class="x" onclick="closeModal()" aria-label="Close">✕</button>
+    <div class="m-left"><img id="mImg" src="" alt=""></div>
+    <div class="m-right">
+      <div id="mTitle" class="m-title">Product</div>
+      <div class="m-price">₦<span id="mPrice">0</span></div>
+      <div id="mOpts"></div>
+      <div>
+        <label style="font-size:13px;color:#666">Quantity</label>
+        <div class="row" style="margin-top:6px">
+          <button class="qty" onclick="chgQty(-1)">−</button>
+          <div id="mQty" style="min-width:36px;text-align:center">1</div>
+          <button class="qty" onclick="chgQty(1)">+</button>
+          <div style="margin-left:auto;font-weight:800">Total: ₦<span id="mTotal">0</span></div>
+        </div>
+      </div>
+      <div class="row" style="gap:10px;margin-top:10px">
+        <button class="cta" onclick="addToCart()">Add to Cart</button>
+        <a href="cart.html"><button class="cta alt">View Cart</button></a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Added to cart</div>
+
+<footer>
+  <div><strong>Phone:</strong> 0813 567 6153 &nbsp;|&nbsp; <strong>Address:</strong> Unguwan Dosa, Kaduna State</div>
+  <div style="margin-top:10px">&copy; 2025 Kaduna E-Store. All rights reserved.</div>
+</footer>
+
+<script>
+/* ========= Products (Your Real Data) =========
+   Images are expected at: image/product1.jpg ... image/product122.jpg
+   To change any item, edit below. For variant pricing, use `sizes: {label: price, ...}`.
+   For color-only options (no price change), use `colors: ["Gold","Silver"]`.
+*/
+const products = [
+  {id:1,  name:"Bowl Mold", price:6500, image:"image/product1.jpg"},
+  {id:2,  name:"Half Donut Mold", price:9500, image:"image/product2.jpg"},
+  {id:3,  name:"Striped Jar with Lid Mold", price:5500, image:"image/product3.jpg"},
+  {id:4,  name:"Patterned Tray Mold", price:8500, image:"image/product4.jpg"},
+  {id:5,  name:"Textured Tray Mold", price:5500, image:"image/product5.jpg"},
+  {id:6,  name:"Brush Set", price:5000, image:"image/product6.jpg"},
+  {id:7,  name:"Round Mold with Hole", price:5500, image:"image/product7.jpg"},
+  {id:8,  name:"Frame Mold (Design 3)", price:9000, image:"image/product8.jpg"},
+  {id:9,  name:"Keyholder Mold with Hole", price:5500, image:"image/product9.jpg"},
+  {id:10, name:"Dangling Heart Mold", price:7500, image:"image/product10.jpg"},
+  {id:11, name:"Comb Mold", price:5500, image:"image/product11.jpg"},
+  {id:12, name:"3-in-1 Butterfly Mold", price:3000, image:"image/product12.jpg"},
+  {id:13, name:"Colored Foil Flakes", price:3000, image:"image/product13.jpg"},
+  {id:14, name:"Round Tray Mold (26.5cm)", price:6500, image:"image/product14.jpg"},
+  {id:15, name:"Bubble Coaster (Design 2)", price:4500, image:"image/product15.jpg"},
+  {id:16, name:"Earring Mold (Design A/B/C/D)", price:3500, sizes:["Design A","Design B","Design C","Design D"], image:"image/product16.jpg"},
+  {id:17, name:"Bezel Tape", price:3500, image:"image/product17.jpg"},
+  {id:18, name:"Clock Mold with Indicators", price:6500, image:"image/product18.jpg"},
+  {id:19, name:"Weighing Scale", price:5500, image:"image/product19.jpg"},
+  {id:20, name:"Clock with Numbers Mold", price:7500, image:"image/product20.jpg"},
+  {id:21, name:"Storage Mold (A/B/C/D/E)", price:4500, sizes:["A","B","C","D","E"], image:"image/product21.jpg"},
+  {id:22, name:"Heat Gun", price:10000, image:"image/product22.jpg"},
+  {id:23, name:"Multipurpose Mold", price:5500, image:"image/product23.jpg"},
+  {id:24, name:"Teddy Mold (Set of 2)", price:3500, image:"image/product24.jpg"},
+  {id:25, name:"Stand Mold for 5-Inch Frame (Pair)", price:4500, image:"image/product25.jpg"},
+  {id:26, name:"Stand Mold for 10-Inch Frame (Pair)", price:6000, image:"image/product26.jpg"},
+  {id:27, name:"Wall Hanger", price:400, image:"image/product27.jpg"},
+  {id:28, name:"Disposable Cups", sizes:{"10pcs":300,"25pcs":600,"50pcs":1200}, image:"image/product28.jpg"},
+  {id:29, name:"Jump Ring (Mixed Sizes)", sizes:{"Small Pack":1000,"Full Pack":5500}, image:"image/product29.jpg"},
+  {id:30, name:"Mirror Mold (with 1 Mirror)", price:4500, image:"image/product30.jpg"},
+  {id:31, name:"Bookstand Mold", sizes:{"1pc":4800,"2pcs":9500}, image:"image/product31.jpg"},
+  {id:32, name:"Teddy Mold (Set of 2)", price:2800, image:"image/product32.jpg"},
+  {id:33, name:"Patterned Tray Mold", price:8500, image:"image/product33.jpg"},
+  {id:34, name:"Jetted Mold", price:5500, image:"image/product34.jpg"},
+  {id:35, name:"Bubble Tray Mold", price:7000, image:"image/product35.jpg"},
+  {id:36, name:"Flower Vase Mold", price:7000, image:"image/product36.jpg"},
+  {id:37, name:"Frame Mold with Stand", price:6500, image:"image/product37.jpg"},
+  {id:38, name:"Vase Mold (Water / Striped Shape)", price:6000, sizes:["Water","Striped"], image:"image/product38.jpg"},
+  {id:39, name:"3-Tier Mold with Stand", price:16500, image:"image/product39.jpg"},
+  {id:40, name:"Lighter Refill (40ml)", price:800, image:"image/product40.jpg"},
+  {id:41, name:"10-in-1 Keyholder Mold", price:5500, image:"image/product41.jpg"},
+  {id:42, name:"Pen Mold (Design A/B/C)", price:1500, sizes:["Design A","Design B","Design C"], image:"image/product42.jpg"},
+  {id:43, name:"Tray Mold (A or B)", price:5500, sizes:["A","B"], image:"image/product43.jpg"},
+  {id:44, name:"Alcohol Ink", price:1500, image:"image/product44.jpg"},
+  {id:45, name:"A5 Book Cover Mold (Front/Back)", price:3500, sizes:["Front","Back"], image:"image/product45.jpg"},
+  {id:46, name:"Hair Pin / Veil Clip", price:3000, image:"iimage/product46.jpg"},
+  {id:47, name:"Teddy Mold (Set of 8)", price:3500, image:"iimage/product47.jpg"},
+  {id:48, name:"Clock Engine", price:3500, image:"iimage/product48.jpg"},
+  {id:49, name:"Champ Mold", price:2500, image:"iimage/product49.jpg"},
+  {id:50, name:"Broken Heart Mold", price:1500, image:"iimage/product50.jpg"},
+  {id:51, name:"Mirror", price:2000, image:"iimage/product51.jpg"},
+  {id:52, name:"Cloud Mold", price:5000, image:"iimage/product52.jpg"},
+  {id:53, name:"Butterfly Stickers (15pcs)", price:1000, image:"iimage/product53.jpg"},
+  {id:54, name:"Fairy Light", price:2000, image:"iimage/product54.jpg"},
+  {id:55, name:"“Thank You” Stickers (20pcs)", price:500, image:"iimage/product55.jpg"},
+  {id:56, name:"Keychain (12pcs)", price:2500, image:"iimage/product56.jpg"},
+  {id:57, name:"“Thanks Gorgeous” Cards (10pcs)", price:800, image:"iimage/product57.jpg"},
+  {id:58, name:"Plastic Numbering", sizes:{"Small":1800,"Big":2500}, image:"iimage/product58.jpg"},
+  {id:59, name:"Metallic Powder", price:2000, image:"iimage/product59.jpg"},
+  {id:60, name:"Big Vinyl Stickers", price:2000, image:"iimage/product60.jpg"},
+  {id:61, name:"Metallic Pen", price:1500, colors:["Gold","Silver"], image:"iimage/product61.jpg"},
+  {id:62, name:"Gas Lighter", price:1500, image:"iimage/product62.jpg"},
+  {id:63, name:"Bowl with Spoon", price:1500, image:"iimage/product63.jpg"},
+  {id:64, name:"Teddy Charm", price:500, image:"iimage/product64.jpg"},
+  {id:65, name:"Small Stud Mold", price:3000, image:"iimage/product65.jpg"},
+  {id:66, name:"Brush Mold (with One Brush)", price:6500, image:"iimage/product66.jpg"},
+  {id:67, name:"100ml Measuring Cups", price:1500, image:"iimage/product67.jpg"},
+  {id:68, name:"Pins (6pcs)", price:1000, image:"iimage/product68.jpg"},
+  {id:69, name:"Organza", price:300, image:"iimage/product69.jpg"},
+  {id:70, name:"Stud Pins (12pcs)", price:1000, image:"iimage/product70.jpg"},
+  {id:71, name:"Fur Sheet", price:1000, image:"iimage/product71.jpg"},
+  {id:72, name:"Eye Screw (50pcs)", price:500, image:"iimage/product72.jpg"},
+  {id:73, name:"Pipette (4pcs)", price:500, image:"iimage/product73.jpg"},
+  {id:74, name:"Sponge", price:1000, image:"iimage/product74.jpg"},
+  {id:75, name:"Acrylic Paint (Set of 6)", price:1500, image:"iimage/product75.jpg"},
+  {id:76, name:"Big Turner", sizes:{"10pcs":400,"50pcs":2000}, image:"iimage/product76.jpg"},
+  {id:77, name:"Black Chain", price:500, image:"iimage/product77.jpg"},
+  {id:78, name:"Earring Hooks (24pcs)", price:400, image:"iimage/product78.jpg"},
+  {id:79, name:"Picker", price:1000, image:"iimage/product79.jpg"},
+  {id:80, name:"Phone Holder Grip", price:400, image:"iimage/product80.jpg"},
+  {id:81, name:"Brochure", price:500, image:"iimage/product81.jpg"},
+  {id:82, name:"UV Resin (25g)", price:3000, image:"iimage/product82.jpg"},
+  {id:83, name:"Deburring Tool", price:4000, image:"iimage/product83.jpg"},
+  {id:84, name:"Black Disposable Gloves (2pcs)", price:400, image:"iimage/product84.jpg"},
+  {id:85, name:"Tray Handle", price:2000, image:"imagee/product85.jpg"},
+  {id:86, name:"“Thank You” Cards (10pcs)", price:800, image:"imagee/product86.jpg"},
+  {id:87, name:"Bowtie Mold", price:3000, image:"imagee/product87.jpg"},
+  {id:88, name:"Silicone Mat", price:6500, image:"imagee/product88.jpg"},
+  {id:89, name:"Bangle Mold", price:2500, image:"imagee/product89.jpg"},
+  {id:90, name:"Butterfly Mold", price:3500, image:"imagee/product90.jpg"},
+  {id:91, name:"Phone Holder Mold", price:2500, image:"imagee/product91.jpg"},
+  {id:92, name:"Wooden Stand", price:1500, image:"imagee/product92.jpeg"},
+  {id:93, name:"Resin (2:1, 1kg:500g)", price:22500, image:"imagee/product93.jpg"},
+  {id:94, name:"Resin (120g:60g)", price:3500, image:"imagee/product94.jpg"},
+  {id:95, name:"Resin (500g:250g)", price:11500, image:"imagee/product95.jpg"},
+  {id:96, name:"Resin (250g:125g)", price:6500, image:"imagee/product96.jpeg"},
+  {id:97, name:"Acrylic Paint (White/Gold/Black/Brown)", price:3000, image:"imagee/product97.jpg"},
+  {id:98, name:"Pen Ink (5pcs)", price:1000, image:"imagee/product98.jpg"},
+  {id:99, name:"Pressed Flowers", price:3000, image:"imagee/product99.jpg"},
+  {id:100,name:"Keyholder Mold with Hole", price:3500, image:"imagee/product100.jpg"},
+  {id:101,name:"Gypsum Color", price:1500, image:"imagee/product101.jpg"},
+  {id:102,name:"3-in-1 Book Ring", price:2000, image:"imagee/product102.jpg"},
+  {id:103,name:"Alphabet Stickers (Black, Gold, Silver, White)", price:1500, colors:["Black","Gold","Silver","White"], image:"imagee/product103.jpg"},
+  {id:104,name:"Silicone Turner", price:2000, image:"imagee/product104.jpg"},
+  {id:105,name:"Charms (2pcs)", price:500, image:"imagee/product105.jpg"},
+  {id:106,name:"Faux Book", price:4500, image:"imagee/product106.jpg"},
+  {id:107,name:"Comb Mold", price:2500, image:"imagee/product107.jpg"},
+  {id:108,name:"6pcs Book Ring", price:1800, image:"imagee/product108.jpg"},
+  {id:109,name:"Diamond Mold", price:6000, image:"imagee/product109.jpg"},
+  {id:110,name:"Earring Hooks", price:1000, image:"imagee/product110.jpg"},
+  {id:111,name:"Earring Hooks (Silver & Gold)", price:1000, colors:["Silver","Gold"], image:"imagee/product111.jpg"},
+  {id:112,name:"Teddy Mold", price:1500, image:"imagee/product112.jpg"},
+  {id:113,name:"Pendant Clasps (6pcs)", price:1000, image:"imagee/product113.jpg"},
+  {id:114,name:"Color Reference Diagram", price:0, image:"imagee/product114.jpg"}, /* set real price later */
+  {id:115,name:"Plastic Numbers (Black, Gold, Silver)", price:1800, colors:["Black","Gold","Silver"], image:"imagee/product115.jpg"},
+  {id:116,name:"Nordic Décor", price:4500, image:"imagee/product116.jpg"},
+  {id:117,name:"Plastic Roman Figure Numbers (Black, Gold, Silver)", price:1800, colors:["Black","Gold","Silver"], image:"imagee/product117.jpg"},
+  {id:118,name:"Resin Pigment (Blue/Black/Yellow/Green/Orange)", price:1500, colors:["Blue","Black","Yellow","Green","Orange"], image:"imagee/product118.jpg"},
+  {id:119,name:"Isopropyl Alcohol", price:1500, image:"imagee/product119.jpg"},
+  {id:120,name:"Alphabet Stickers (Black & Gold)", price:1500, colors:["Black","Gold"], image:"imagee/product120.jpg"},
+  {id:121,name:"Flower Storage Mold", price:6000, image:"imagee/product121.jpg"},
+  {id:122,name:"Heart Frame Mold", price:6500, image:"imagee/product122.jpg"},
+];
+
+/* ========= Core Store Logic ========= */
+const PER_PAGE = 12;
+let page = 1;
+let filtered = [...products];
+let cart = JSON.parse(localStorage.getItem("pc_cart_v1")||"[]");
+
+const grid = document.getElementById('grid');
+const pager = document.getElementById('pagination');
+const searchInput = document.getElementById('searchInput');
+const cartCount = document.getElementById('cartCount');
+
+const backdrop = document.getElementById('backdrop');
+const mImg = document.getElementById('mImg');
+const mTitle = document.getElementById('mTitle');
+const mPrice = document.getElementById('mPrice');
+const mOpts = document.getElementById('mOpts');
+const mQty = document.getElementById('mQty');
+const mTotal = document.getElementById('mTotal');
+const toast = document.getElementById('toast');
+
+let active = null;
+let qty = 1;
+let selSize = null;
+let selColor = null;
+
+function n(n){return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,',')}
+
+function render(){
+  grid.innerHTML='';
+  const start=(page-1)*PER_PAGE;
+  filtered.slice(start,start+PER_PAGE).forEach(p=>{
+    const price = (typeof p.sizes==='object' && !Array.isArray(p.sizes))
+      ? Object.values(p.sizes)[0] : p.price;
+    const card=document.createElement('article');
+    card.className='card';
+    card.innerHTML=`
+      <img src="${p.image}" alt="${p.name}" onerror="this.src='https://via.placeholder.com/400x300?text=${encodeURIComponent(p.name)}'">
+      <div class="card-body">
+        <div class="title">${p.name}</div>
+        <div class="price">₦${n(price||0)}</div>
+        <button class="btn" onclick="openModal(${p.id})">View</button>
+      </div>`;
+    grid.appendChild(card);
+  });
+  renderPager();
+}
+
+function renderPager(){
+  pager.innerHTML='';
+  const totalPages=Math.max(1,Math.ceil(filtered.length/PER_PAGE));
+  const prev=document.createElement('button');
+  prev.className='page-btn'; prev.textContent='Prev'; prev.disabled=page<=1;
+  prev.onclick=()=>{page=Math.max(1,page-1); window.scrollTo({top:0,behavior:'smooth'}); render();};
+  pager.appendChild(prev);
+
+  let s=Math.max(1,page-3); let e=Math.min(totalPages,s+6); if(e-s<6) s=Math.max(1,e-6);
+  for(let i=s;i<=e;i++){
+    const b=document.createElement('button');
+    b.className='page-btn'+(i===page?' active':''); b.textContent=i;
+    b.onclick=()=>{page=i; window.scrollTo({top:0,behavior:'smooth'}); render();};
+    pager.appendChild(b);
+  }
+  const next=document.createElement('button');
+  next.className='page-btn'; next.textContent='Next'; next.disabled=page>=totalPages;
+  next.onclick=()=>{page=Math.min(totalPages,page+1); window.scrollTo({top:0,behavior:'smooth'}); render();};
+  pager.appendChild(next);
+}
+
+searchInput.addEventListener('input', e=>{
+  const q=e.target.value.trim().toLowerCase();
+  filtered = q ? products.filter(p=>p.name.toLowerCase().includes(q)) : [...products];
+  page=1; render();
+});
+
+function openModal(id){
+  active = products.find(p=>p.id===id);
+  if(!active) return;
+
+  // reset selections
+  qty=1; selSize=null; selColor=null;
+  mImg.src=active.image; mImg.alt=active.name;
+  mImg.onerror=function(){this.src=`https://via.placeholder.com/800x600?text=${encodeURIComponent(active.name)}`};
+  mTitle.textContent=active.name;
+  mOpts.innerHTML='';
+
+  // size select (array = no price change, object = price mapping)
+  let unit = active.price||0;
+  if(active.sizes){
+    const label=document.createElement('label');
+    label.style.display='block'; label.style.fontSize='13px'; label.style.color='#666';
+    label.textContent = (typeof active.sizes==='object' && !Array.isArray(active.sizes)) ? 'Size / Pack (price varies)' : 'Size / Variant';
+    const sel=document.createElement('select'); sel.className='opt';
+
+    if(Array.isArray(active.sizes)){
+      sel.innerHTML = `<option value="">Choose</option>${active.sizes.map(s=>`<option value="${s}">${s}</option>`).join('')}`;
+      sel.onchange=()=>{selSize=sel.value||null; updatePrice();};
+    } else {
+      // object mapping
+      const entries=Object.entries(active.sizes);
+      sel.innerHTML = entries.map(([k,v],i)=>`<option value="${k}" ${i===0?'selected':''}>${k} — ₦${n(v)}</option>`).join('');
+      sel.onchange=()=>{selSize=sel.value; updatePrice();};
+      selSize = entries[0][0];
+      unit = entries[0][1];
+    }
+    mOpts.appendChild(label); mOpts.appendChild(sel);
+  }
+
+  // color select
+  if(active.colors){
+    const label=document.createElement('label');
+    label.style.display='block'; label.style.fontSize='13px'; label.style.color='#666'; label.textContent='Color';
+    const sel=document.createElement('select'); sel.className='opt';
+    sel.innerHTML = `<option value="">Choose color</option>${active.colors.map(c=>`<option value="${c}">${c}</option>`).join('')}`;
+    sel.onchange=()=>{selColor=sel.value||null;};
+    mOpts.appendChild(label); mOpts.appendChild(sel);
+  }
+
+  mPrice.textContent = n(unit||0);
+  mQty.textContent = qty;
+  mTotal.textContent = n((unit||0)*qty);
+  backdrop.style.display='flex'; backdrop.setAttribute('aria-hidden','false');
+}
+
+function updatePrice(){
+  if(!active) return;
+  let unit = (typeof active.sizes==='object' && !Array.isArray(active.sizes))
+    ? (active.sizes[selSize] ?? Object.values(active.sizes)[0])
+    : (active.price||0);
+  mPrice.textContent = n(unit||0);
+  mTotal.textContent = n((unit||0)*qty);
+}
+
+function chgQty(d){ qty=Math.max(1,qty+d); mQty.textContent=qty; updatePrice(); }
+function closeModal(){ backdrop.style.display='none'; backdrop.setAttribute('aria-hidden','true'); }
+
+function addToCart(){
+  if(!active) return;
+  let unit = (typeof active.sizes==='object' && !Array.isArray(active.sizes))
+    ? (active.sizes[selSize] ?? Object.values(active.sizes)[0])
+    : (active.price||0);
+
+  const item = {
+    id: active.id, name: active.name, image: active.image,
+    price: unit, qty, size: selSize||null, color: selColor||null,
+    sizes: Array.isArray(active.sizes) ? active.sizes : (typeof active.sizes==='object'?Object.keys(active.sizes):null),
+    colors: active.colors || null
+  };
+
+  // merge identical variants
+  const i = cart.findIndex(c=>c.id===item.id && c.size===item.size && c.color===item.color);
+  if(i>-1) cart[i].qty += item.qty; else cart.push(item);
+
+  localStorage.setItem("pc_cart_v1", JSON.stringify(cart));
+  updateCartCount();
+  showToast("Added to cart");
+  closeModal();
+}
+
+function updateCartCount(){
+  const count = cart.reduce((s,i)=>s+(i.qty||1),0);
+  document.getElementById('cartCount').textContent = count;
+}
+function showToast(t){
+  toast.textContent=t; toast.style.display='block'; toast.style.opacity='1';
+  setTimeout(()=>{toast.style.opacity='0'; setTimeout(()=>toast.style.display='none',250)},1600);
+}
+
+/* init */
+(function init(){
+  updateCartCount();
+  render();
+})();
+</script>
+</body>
+</html>

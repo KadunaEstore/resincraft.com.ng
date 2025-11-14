@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Your Cart - Kaduna E-Store</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  :root{--pink:#ff69b4;--pink-soft:#ffe6f0;--black:#000;--white:#fff;}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Segoe UI',Arial,sans-serif;background:var(--white);color:var(--black);}
+  header{background:var(--pink);padding:1em 2em;display:flex;align-items:center;justify-content:space-between;color:#fff;}
+  .logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:#fff;font-weight:bold;font-size:1.2em;}
+  .logo img{height:40px;border-radius:5px;}
+  main{max-width:980px;margin:2em auto;padding:0 1em;}
+  h2{text-align:center;margin-bottom:1em;}
+  .cart-item{display:grid;grid-template-columns:100px 1fr auto;gap:1em;background:var(--pink-soft);margin-bottom:1em;padding:1em;border-radius:12px;align-items:center;box-shadow:0 8px 18px rgba(0,0,0,.06)}
+  .cart-item img{width:100px;height:100px;object-fit:cover;border-radius:8px;}
+  .cart-info h4{margin:0 0 4px;font-size:1rem}
+  .meta{color:#666;font-size:.9rem}
+  .qty-row{display:flex;align-items:center;gap:8px;margin-top:8px}
+  .qty-btn{padding:6px 12px;border:none;background:#000;color:#fff;border-radius:6px;cursor:pointer}
+  .qty-btn:hover{background:#333}
+  .price-block{text-align:right}
+  .price-block p{margin:.3em 0}
+  .remove-btn{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid #ffb3d5;color:#d20000;padding:.45em .8em;border-radius:8px;cursor:pointer;font-weight:600}
+  .remove-btn i{font-size:.95em}
+  .remove-btn:hover{background:#ffe6f0}
+  .toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:1.2em;flex-wrap:wrap}
+  .cart-total{font-weight:bold;font-size:1.1rem}
+  .btn{background:#000;color:#fff;border:none;padding:.85em 1.4em;border-radius:8px;cursor:pointer;font-weight:700}
+  .btn:hover{background:#333}
+  .btn-light{background:#fff;color:#000;border:1px solid #ddd}
+  .btn-danger{background:#d20000}
+  .btn-danger:hover{background:#aa0000}
+  .empty{text-align:center;margin:3em 0;color:#666;font-size:1.05rem}
+  footer{background:var(--pink);color:#fff;text-align:center;padding:1.5em;margin-top:3em;}
+</style>
+</head>
+<body>
+
+<header>
+  <a href="index.html" class="logo">
+    <img src="image/logo.jpg" alt="Logo"> Kaduna E-Store
+  </a>
+  <nav>
+    <a href="index.html" style="color:#fff;margin-right:16px;text-decoration:none;font-weight:600">Continue Shopping</a>
+    <a href="checkout.html" style="color:#fff;text-decoration:none;font-weight:700">Checkout</a>
+  </nav>
+</header>
+
+<main>
+  <h2>Your Shopping Cart</h2>
+  <div id="cartContainer"></div>
+
+  <div class="toolbar" id="cartToolbar" style="display:none">
+    <button class="btn btn-light" onclick="clearCart()"><i class="fa fa-trash"></i> Clear Cart</button>
+    <div class="cart-total" id="cartTotal"></div>
+    <div>
+      <a href="index.html"><button class="btn btn-light">Back to Shop</button></a>
+      <a href="checkout.html"><button class="btn">Proceed to Checkout</button></a>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <p><strong>Phone:</strong> 0813 567 6153</p>
+  <p><strong>Address:</strong> Unguwan Dosa, Kaduna State</p>
+  <p>&copy; 2025 Kaduna E-Store. All rights reserved.</p>
+</footer>
+
+<script>
+let cart = JSON.parse(localStorage.getItem("pc_cart_v1") || "[]");
+
+function fmt(n){return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');}
+
+function save(){
+  localStorage.setItem("pc_cart_v1", JSON.stringify(cart));
+}
+
+function render(){
+  const container = document.getElementById("cartContainer");
+  const totalEl   = document.getElementById("cartTotal");
+  const toolbar   = document.getElementById("cartToolbar");
+
+  container.innerHTML = "";
+  if(cart.length === 0){
+    toolbar.style.display = "none";
+    container.innerHTML = '<p class="empty">Your cart is empty.</p><div style="text-align:center"><a href="index.html"><button class="btn">Start Shopping</button></a></div>';
+    return;
+  } else {
+    toolbar.style.display = "flex";
+  }
+
+  let grand = 0;
+  cart.forEach((item, i) => {
+    const subtotal = (item.price || 0) * (item.qty || 1);
+    grand += subtotal;
+
+    const row = document.createElement("div");
+    row.className = "cart-item";
+    row.innerHTML = `
+      <img src="${item.image}" alt="${item.name}" onerror="this.src='https://via.placeholder.com/100x100?text=${encodeURIComponent(item.name)}'">
+      <div class="cart-info">
+        <h4>${item.name}</h4>
+        <div class="meta">
+          ${item.size ? `Size: <strong>${item.size}</strong> &nbsp;` : ""}
+          ${item.color ? `Color: <strong>${item.color}</strong>` : ""}
+        </div>
+        <div class="qty-row">
+          <button class="qty-btn" onclick="chg(${i}, -1)">−</button>
+          <span><strong>${item.qty || 1}</strong></span>
+          <button class="qty-btn" onclick="chg(${i}, 1)">+</button>
+          <button class="remove-btn" onclick="removeItem(${i})" title="Remove this item">
+            <i class="fa fa-trash"></i> Remove
+          </button>
+        </div>
+      </div>
+      <div class="price-block">
+        <p>Unit: ₦${fmt(item.price || 0)}</p>
+        <p><strong>₦${fmt(subtotal)}</strong></p>
+      </div>
+    `;
+    container.appendChild(row);
+  });
+
+  totalEl.textContent = "Total: ₦" + fmt(grand);
+}
+
+function chg(index, delta){
+  const q = Math.max(1, (cart[index].qty || 1) + delta);
+  cart[index].qty = q;
+  save(); render();
+}
+
+function removeItem(index){
+  cart.splice(index, 1);
+  save(); render();
+}
+
+function clearCart(){
+  if(confirm("Remove all items from your cart?")){
+    cart = [];
+    save(); render();
+  }
+}
+
+render();
+</script>
+</body>
+</html>
